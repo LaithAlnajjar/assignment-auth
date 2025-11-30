@@ -4,17 +4,15 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { Observable } from 'rxjs';
 import { Request } from 'express';
 import { FirebaseRepository } from 'src/firebase/firebase.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(private readonly firebaseRepo: FirebaseRepository) {}
-  async canActivate(
-    context: ExecutionContext,
-  ): boolean | Promise<boolean> | Observable<boolean> {
-    const request: Request = context.switchToHttp().getRequest();
+
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest<Request>();
     const authHeader = request.headers.authorization;
     if (!authHeader) {
       throw new UnauthorizedException('No token provided');
@@ -33,7 +31,7 @@ export class AuthGuard implements CanActivate {
 
       request['user'] = {
         uid: uid,
-        email: decodedToken.email,
+        email: decodedToken.email as string,
         role: userDoc.data()?.['role'] as string,
       };
       return true;
