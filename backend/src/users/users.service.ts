@@ -1,26 +1,22 @@
 import { Injectable } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { FirebaseRepository } from '../firebase/firebase.service';
 
 @Injectable()
 export class UsersService {
-  create(createUserDto: CreateUserDto) {
-    return 'This action adds a new user';
-  }
+  constructor(private readonly firebaseRepo: FirebaseRepository) {}
 
-  findAll() {
-    return `This action returns all users`;
-  }
+  async createUserProfile(uid: string, email: string) {
+    const userRef = this.firebaseRepo.firestore.collection('users').doc(uid);
+    const userSnap = await userRef.get();
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
-  }
+    if (!userSnap.exists) {
+      await userRef.set({
+        email,
+        createdAt: new Date().toISOString(),
+        role: 'user',
+      });
+    }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+    return { status: 'success', message: 'Profile initialized' };
   }
 }
