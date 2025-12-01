@@ -41,7 +41,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
         const token = await currentUser.getIdToken();
 
         try {
-          const res = await api.get("http://localhost:3000/api/profile", {
+          const res = await api.get("/profile", {
             headers: { Authorization: `Bearer ${token}` },
           });
           const data = res.data;
@@ -60,9 +60,24 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signInWithGoogle = async () => {
-    const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
-    router.push("/dashboard");
+    try {
+      const provider = new GoogleAuthProvider();
+      const userCredential = await signInWithPopup(auth, provider);
+      const token = await userCredential.user.getIdToken();
+
+      await api.post(
+        "/users",
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      router.push("/dashboard");
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
   };
 
   const logout = async () => {
