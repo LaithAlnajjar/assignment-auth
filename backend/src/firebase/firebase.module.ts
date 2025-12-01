@@ -30,7 +30,11 @@ const firebaseProvider = {
 };
 
 @Module({
-  imports: [ConfigModule],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+  ],
   providers: [firebaseProvider, FirebaseRepository],
   exports: [FirebaseRepository],
 })
