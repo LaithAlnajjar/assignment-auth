@@ -8,6 +8,9 @@ declare global {
         email: string;
         role: string;
       };
+      cookies?: {
+        refresh_token: string;
+      };
     }
   }
 }
