@@ -1,4 +1,11 @@
-import { Controller, UseGuards, Get, Req, Post } from '@nestjs/common';
+import {
+  Controller,
+  UseGuards,
+  Get,
+  Req,
+  Post,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { AdminGuard } from 'src/roles/admin.guard';
 import { type Request } from 'express';
@@ -31,5 +38,23 @@ export class UsersController {
       revenue: '$50,000',
       activeUsers: 12,
     };
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('demo/promote')
+  async promoteSelf(@Req() req: Request) {
+    if (!req.user) {
+      throw new UnauthorizedException();
+    }
+    return this.usersService.setUserRole(req.user.uid, 'admin');
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('demo/demote')
+  async demoteSelf(@Req() req: Request) {
+    if (!req.user) {
+      throw new UnauthorizedException();
+    }
+    return this.usersService.setUserRole(req.user.uid, 'user');
   }
 }

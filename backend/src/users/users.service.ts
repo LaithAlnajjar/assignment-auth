@@ -19,4 +19,11 @@ export class UsersService {
 
     return { status: 'success', message: 'Profile initialized' };
   }
+
+  async setUserRole(uid: string, role: 'admin' | 'user') {
+    await this.firebaseRepo.firestore.collection('users').doc(uid).update({
+      role: role,
+    });
+    return { message: `Role updated to ${role}` };
+  }
 }

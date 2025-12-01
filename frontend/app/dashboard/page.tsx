@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
+import { handler } from "next/dist/build/templates/app-page";
 
 export default function Dashboard() {
   const { currentUser, role, loading, logout } = useAuth();
   const router = useRouter();
   const [profileData, setProfileData] = useState<any>(null);
+  const [demoLoading, setDemoLoading] = useState(false);
 
   useEffect(() => {
     if (!loading && !currentUser) {
@@ -29,6 +31,28 @@ export default function Dashboard() {
       });
     }
   }, [currentUser]);
+
+  const handleRoleToggle = async (newRole: "admin" | "user") => {
+    if (!currentUser) return;
+    setDemoLoading(true);
+    try {
+      const token = await currentUser.getIdToken();
+      const endpoint = newRole === "admin" ? "/demo/promote" : "/demo/demote";
+
+      await api.post(
+        endpoint,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      window.location.reload();
+    } catch (err) {
+      console.error("Failed to switch role", err);
+      setDemoLoading(false);
+    }
+  };
 
   if (loading) return <div className="p-10">Loading...</div>;
   if (!currentUser) return null;
@@ -68,7 +92,9 @@ export default function Dashboard() {
         </div>
 
         <div className="mb-8">
-          <h3 className="text-lg font-semibold mb-4">Backend Response</h3>
+          <h3 className="text-lg text-gray-800 font-semibold mb-4">
+            Backend Response
+          </h3>
           <div className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto font-mono text-sm">
             {profileData
               ? JSON.stringify(profileData, null, 2)
@@ -86,6 +112,46 @@ export default function Dashboard() {
           >
             View System Stats
           </Link>
+        </div>
+
+        <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-6 mt-10">
+          <h3 className="text-lg font-bold text-yellow-800 mb-2">
+            🚧 For Demo Purpose Only
+          </h3>
+          <p className="text-yellow-700 mb-4 text-sm">
+            Use these buttons to instantly toggle your role and test RBAC
+            functionality. (This section would not exist in production).
+          </p>
+
+          <div className="flex gap-4">
+            <button
+              onClick={() => handleRoleToggle("admin")}
+              disabled={demoLoading || role === "admin"}
+              className={`px-4 py-2 rounded font-medium transition
+                ${
+                  role === "admin"
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-yellow-500 hover:bg-yellow-600 text-white shadow-sm hover:cursor-pointer"
+                }
+              `}
+            >
+              {demoLoading ? "Switching..." : "Promote to Admin"}
+            </button>
+
+            <button
+              onClick={() => handleRoleToggle("user")}
+              disabled={demoLoading || role === "user"}
+              className={`px-4 py-2 rounded font-medium transition 
+                ${
+                  role === "user"
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-gray-600 hover:bg-gray-700 text-white shadow-sm hover:cursor-pointer"
+                }
+              `}
+            >
+              {demoLoading ? "Switching..." : "Demote to User"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
