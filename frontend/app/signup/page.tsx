@@ -96,7 +96,7 @@ export default function SignupPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none transition"
+              className="w-full px-4 py-2 border rounded-md text-gray-500 focus:border-white focus:ring-2 focus:ring-blue-500 outline-none transition"
               placeholder="you@example.com"
             />
           </div>
@@ -110,7 +110,7 @@ export default function SignupPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none transition"
+              className="w-full px-4 py-2 border rounded-md text-gray-500 focus:border-white focus:ring-2 focus:ring-blue-500 outline-none transition"
               placeholder="••••••••"
             />
           </div>
@@ -124,7 +124,7 @@ export default function SignupPage() {
               required
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none transition"
+              className="w-full px-4 py-2 border rounded-md text-gray-500 focus:border-white focus:ring-2 focus:ring-blue-500 outline-none transition"
               placeholder="••••••••"
             />
           </div>
@@ -136,7 +136,7 @@ export default function SignupPage() {
               ${
                 isSubmitting
                   ? "bg-blue-400 cursor-not-allowed"
-                  : "bg-blue-600 hover:bg-blue-700"
+                  : "bg-blue-600 hover:bg-blue-700 hover:cursor-pointer"
               }
             `}
           >
@@ -152,7 +152,7 @@ export default function SignupPage() {
 
         <button
           onClick={handleGoogleSignUp}
-          className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50 transition"
+          className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50 hover:cursor-pointer transition"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path

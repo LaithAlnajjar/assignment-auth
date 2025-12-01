@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -10,6 +10,7 @@ export default function AdminStatsPage() {
   const { currentUser, role, loading } = useAuth();
   const router = useRouter();
   const [stats, setStats] = useState<any>(null);
+  const alertShown = useRef(false);
 
   useEffect(() => {
     if (!loading) {
@@ -18,7 +19,11 @@ export default function AdminStatsPage() {
         return;
       }
       if (role !== "admin") {
-        router.push("/dashboard");
+        if (!alertShown.current) {
+          alert("You must be an admin to access this page.");
+          alertShown.current = true;
+          router.push("/dashboard");
+        }
       }
     }
   }, [currentUser, role, loading, router]);

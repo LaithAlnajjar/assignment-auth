@@ -76,19 +76,17 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {role === "admin" && (
-          <div className="border-t pt-6">
-            <h3 className="text-lg font-semibold mb-4 text-red-600">
-              Admin Area
-            </h3>
-            <Link
-              href="/admin/stats"
-              className="inline-block bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium transition shadow-sm"
-            >
-              View System Stats
-            </Link>
-          </div>
-        )}
+        <div className="border-t pt-6">
+          <h3 className="text-lg font-semibold mb-4 text-red-600">
+            Admin Area
+          </h3>
+          <Link
+            href="/admin/stats"
+            className="inline-block bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium transition shadow-sm"
+          >
+            View System Stats
+          </Link>
+        </div>
       </div>
     </div>
   );
