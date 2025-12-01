@@ -13,12 +13,11 @@ export class AuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
-    const authHeader = request.headers.authorization;
-    if (!authHeader) {
+    const token = request.cookies?.access_token as string;
+
+    if (!token) {
       throw new UnauthorizedException('No token provided');
     }
-
-    const token = authHeader.split(' ')[1];
 
     try {
       const decodedToken = await this.firebaseRepo.auth.verifyIdToken(token);
@@ -32,12 +31,15 @@ export class AuthGuard implements CanActivate {
       request['user'] = {
         uid: uid,
         email: decodedToken.email as string,
-        role: userDoc.data()?.['role'] as string,
+        role: userDoc.exists
+          ? (userDoc.data()?.['role'] as string)
+          : ('user' as string),
       };
+
       return true;
-    } catch (error) {
-      console.error('Auth Error:', error);
-      throw new UnauthorizedException('Invalid token');
+    } catch (err) {
+      console.error(err);
+      throw new UnauthorizedException('Invalid or expired token');
     }
   }
 }
