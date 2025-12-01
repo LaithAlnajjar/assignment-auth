@@ -8,12 +8,6 @@ export default function HomePage() {
   const { currentUser, loading } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    if (!loading && currentUser) {
-      router.push("/dashboard");
-    }
-  }, [currentUser, loading, router]);
-
   if (loading) return <div className="p-10">Loading...</div>;
 
   return (

@@ -14,7 +14,7 @@ import {
 } from "react";
 import auth from "@/lib/firebase";
 import { api } from "@/lib/api";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 
 interface AuthContextType {
   currentUser: User | null;
