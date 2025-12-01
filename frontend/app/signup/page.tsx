@@ -1,16 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import auth from "@/lib/firebase";
+import { useAuth } from "@/context/AuthContext"; // Import the Context
 import Link from "next/link";
-import { api } from "@/lib/api";
 
 export default function SignupPage() {
-  const { signInWithGoogle } = useAuth();
-  const router = useRouter();
+  const { signupWithEmail, signInWithGoogle } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,28 +25,9 @@ export default function SignupPage() {
     setIsSubmitting(true);
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-      const user = userCredential.user;
-
-      const token = await user.getIdToken();
-
-      await api.post(
-        "/users",
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      router.push("/dashboard");
+      await signupWithEmail(email, password);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      console.error(err);
       if (err.code === "auth/email-already-in-use") {
         setError("That email is already in use.");
       } else if (err.code === "auth/weak-password") {
@@ -59,16 +35,7 @@ export default function SignupPage() {
       } else {
         setError("Failed to create account. Please try again.");
       }
-    } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const handleGoogleSignUp = async () => {
-    try {
-      await signInWithGoogle();
-    } catch (err) {
-      setError("Failed to sign up with Google.");
     }
   };
 
@@ -96,7 +63,7 @@ export default function SignupPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 border rounded-md text-gray-500 focus:border-white focus:ring-2 focus:ring-blue-500 outline-none transition"
+              className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:border-white focus:ring-blue-500 outline-none transition"
               placeholder="you@example.com"
             />
           </div>
@@ -110,7 +77,7 @@ export default function SignupPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border rounded-md text-gray-500 focus:border-white focus:ring-2 focus:ring-blue-500 outline-none transition"
+              className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:border-white focus:ring-blue-500 outline-none transition"
               placeholder="••••••••"
             />
           </div>
@@ -124,7 +91,7 @@ export default function SignupPage() {
               required
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-4 py-2 border rounded-md text-gray-500 focus:border-white focus:ring-2 focus:ring-blue-500 outline-none transition"
+              className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:border-white focus:ring-blue-500 outline-none transition"
               placeholder="••••••••"
             />
           </div>
@@ -151,8 +118,8 @@ export default function SignupPage() {
         </div>
 
         <button
-          onClick={handleGoogleSignUp}
-          className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50 hover:cursor-pointer transition"
+          onClick={() => signInWithGoogle()}
+          className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:cursor-pointer hover:bg-gray-50 transition"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path

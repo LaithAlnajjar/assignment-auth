@@ -2,12 +2,10 @@
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import auth from "@/lib/firebase";
+import { useState } from "react";
 
 export default function Login() {
-  const { currentUser, loading, signInWithGoogle, loginWithEmail } = useAuth();
+  const { loading, signInWithGoogle, loginWithEmail } = useAuth();
   const router = useRouter();
 
   const [email, setEmail] = useState("");

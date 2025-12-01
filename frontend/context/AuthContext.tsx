@@ -1,5 +1,6 @@
 "use client";
 import {
+  createUserWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithEmailAndPassword,
   signInWithPopup,
@@ -23,6 +24,7 @@ interface AuthContextType {
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
   loginWithEmail: (email: string, pass: string) => Promise<void>;
+  signupWithEmail: (email: string, pass: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -96,6 +98,27 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const signupWithEmail = async (email: string, pass: string) => {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        pass
+      );
+      const idToken = await userCredential.user.getIdToken();
+      const refreshToken = userCredential.user.refreshToken;
+
+      await api.post("/auth/login", { idToken, refreshToken });
+
+      await api.post("/users");
+
+      router.push("/dashboard");
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  };
+
   const logout = async () => {
     try {
       await api.post("/auth/logout");
@@ -115,6 +138,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         signInWithGoogle,
         loginWithEmail,
+        signupWithEmail,
         logout,
       }}
     >
