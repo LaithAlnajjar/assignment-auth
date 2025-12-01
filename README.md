@@ -1,3 +1,4 @@
+````markdown
 # Authentication & RBAC System (Next.js + NestJS + Firebase)
 
 A robust full-stack application implementing secure Authentication, Role-Based Access Control (RBAC), and containerized deployment.
@@ -10,6 +11,8 @@ This project demonstrates a secure "Hybrid" authentication architecture using **
 
 - **Authentication:** Email/Password & Google OAuth via Firebase.
 - **Authorization:** JWT verification with server-side RBAC protection.
+- **Secure Session Management:** HTTP-only cookies with automatic token refresh.
+- **Server-Side Protection:** Next.js Middleware guarding routes before rendering.
 - **Role Management:** Roles (`user`, `admin`) stored in **Cloud Firestore** for instant updates.
 - **Infrastructure:** Fully Dockerized setup with multi-stage builds.
 
@@ -18,7 +21,7 @@ This project demonstrates a secure "Hybrid" authentication architecture using **
 ## 🛠️ Tech Stack
 
 - **Frontend:** Next.js (TypeScript), Tailwind CSS, Context API, Axios.
-- **Backend:** NestJS (TypeScript), Firebase Admin SDK.
+- **Backend:** NestJS (TypeScript), Firebase Admin SDK, Cookie Parser.
 - **Database:** Cloud Firestore (NoSQL).
 - **DevOps:** Docker, Docker Compose.
 
@@ -67,7 +70,9 @@ NEXT_PUBLIC_FIREBASE_APP_ID=1:123456...
 PROJECT_ID=your-project-id
 CLIENT_EMAIL=firebase-adminsdk-xyz@your-project.iam.gserviceaccount.com
 PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQ..."
+FIREBASE_API_KEY=AIzaSy... (Same as frontend key, used for backend refresh calls)
 ```
+````
 
 > **Important:** Place your `service-account.json` file inside the `backend/` folder if running locally without env vars, but the Docker setup reads from this root `.env`.
 
@@ -99,7 +104,7 @@ This project is configured to start with a single command. Ensure **Docker Deskt
 cd backend
 npm install
 # Ensure you have the backend/.env file for firebase or export variables in your shell
-npm run start:
+npm run start:dev
 ```
 
 _Backend runs on: `http://localhost:3000`_
@@ -121,37 +126,39 @@ _Frontend runs on: `http://localhost:3001` (Next.js automatically detects port 3
 
 All backend routes are prefixed with `/api`.
 
-| Method | Endpoint            | Access | Description                                                                    |
-| :----- | :------------------ | :----- | :----------------------------------------------------------------------------- |
-| `GET`  | `/api/health`       | Public | Health check for Docker/Load Balancers.                                        |
-| `POST` | `/api/users`        | Auth   | Initializes a user profile in Firestore. Called automatically on Signup/Login. |
-| `GET`  | `/api/profile`      | Auth   | Returns the current user's profile and Role from Firestore.                    |
-| `GET`  | `/api/admin/stats`  | Admin  | Returns sensitive system stats. Throws 403 for non-admins.                     |
-| `POST` | `/api/demo/promote` | Auth   | _(Demo Feature)_ Promotes current user to Admin instantly.                     |
-| `POST` | `/api/demo/demote`  | Auth   | _(Demo Feature)_ Demotes current user to Standard User.                        |
+| Method | Endpoint            | Access | Description                                                                      |
+| :----- | :------------------ | :----- | :------------------------------------------------------------------------------- |
+| `GET`  | `/api/health`       | Public | Health check for Docker/Load Balancers.                                          |
+| `POST` | `/api/auth/login`   | Public | Swaps Firebase ID Token for HTTP-only cookies (`access_token`, `refresh_token`). |
+| `POST` | `/api/auth/refresh` | Public | Uses `refresh_token` cookie to issue a new `access_token` cookie.                |
+| `POST` | `/api/auth/logout`  | Auth   | Clears auth cookies.                                                             |
+| `POST` | `/api/users`        | Auth   | Initializes a user profile in Firestore. Called automatically on Signup/Login.   |
+| `GET`  | `/api/profile`      | Auth   | Returns the current user's profile and Role from Firestore.                      |
+| `GET`  | `/api/admin/stats`  | Admin  | Returns sensitive system stats. Throws 403 for non-admins.                       |
+| `POST` | `/api/demo/promote` | Auth   | _(Demo Feature)_ Promotes current user to Admin instantly.                       |
+| `POST` | `/api/demo/demote`  | Auth   | _(Demo Feature)_ Demotes current user to Standard User.                          |
 
 ---
 
 ## 🔐 Architecture & Authentication Flow
 
-We utilize **Firebase Auth** for Identity and **NestJS** for Authorization.
+We utilize **Firebase Auth** for Identity validation and **NestJS** for Session Management via HTTP-Only cookies.
 
-1.  **Login:** The user logs in on the Frontend (Next.js) using the Firebase Client SDK.
-2.  **Token:** Firebase issues a short-lived JWT (Access Token) to the browser.
-3.  **Request:** For every API call, the Frontend attaches this token to the Authorization header (`Bearer <token>`).
-4.  **Verification (Backend):**
-    - The NestJS `AuthGuard` intercepts the request.
-    - It verifies the token signature using `firebase-admin`.
-    - It extracts the `uid` from the token.
-5.  **Enrichment:**
-    - The Guard fetches the user's document from Firestore (`users/{uid}`).
-    - It attaches the user data (including **role**) to the request object.
+1.  **Identity Verification:** The user logs in on the Frontend (Next.js) using the Firebase Client SDK.
+2.  **Handshake:** The frontend sends the Firebase ID Token and Refresh Token to the backend (`/auth/login`).
+3.  **Session Creation:** The backend verifies the ID Token, then sets two **HTTP-Only Cookies**:
+    - `access_token`: Short-lived (1 hour). Used for API access.
+    - `refresh_token`: Long-lived (2 weeks). Used to get new access tokens.
+4.  **Request Protection:**
+    - **Frontend (Middleware):** Next.js Middleware checks for the presence of cookies before rendering protected pages (`/dashboard`, `/admin`). If missing, it redirects to login instantly.
+    - **Backend (Guards):** The NestJS `AuthGuard` extracts the token from the cookie, verifies it with Firebase Admin, and fetches the user's Role from Firestore.
+5.  **Silent Refresh:** If the `access_token` expires, the backend returns 401. An Axios interceptor on the frontend catches this, calls `/auth/refresh` to rotate the cookies, and transparently retries the original request.
 
 ### RBAC Logic
 
 Instead of using Firebase Custom Claims (which require token refresh to update), we store roles in Firestore Documents.
 
-**AdminGuard**: For every API call to a protected route, the guard checks the role of the user from the user document. If the role is **admin** a 401 forbidden error is thrown.
+**AdminGuard**: For every API call to a protected route, the guard checks the role of the user from the user document. If the role is **admin**, access is granted; otherwise, a 403 Forbidden error is thrown.
 
 ---
 
@@ -163,7 +170,7 @@ project-root/
 ├── README.md
 ├── backend/                # NestJS
 │   ├── src/
-│   │   ├── auth/           # Auth Logic
+│   │   ├── auth/           # Auth Controller & Cookie Logic
 │   │   ├── admin/          # Admin Guard
 │   │   ├── firebase/       # Admin SDK & Firestore Providers
 │   │   ├── users/          # User Logic & Demo Endpoints
@@ -174,7 +181,8 @@ project-root/
 │   ├── src/
 │   │   ├── app/            # App Router Pages (Login, Dashboard, etc.)
 │   │   ├── context/        # AuthContext (Firebase Client Logic)
-│   │   └── lib/            # Axios & Firebase Config
+│   │   ├── lib/            # Axios Interceptor & Firebase Config
+│   │   └── middleware.ts   # Server-Side Route Protection
 │   └── Dockerfile          # Multi-stage build for Frontend
 ```
 
@@ -184,7 +192,12 @@ project-root/
 
 If I had more time, I would implement:
 
-- **SSR Authentication:** Migrate from client-side token storage to HTTP-Only cookies. This would allow using Next.js Middleware to protect routes server-side, eliminating loading states on the frontend.
-- **Strict Validation:** Implement Server-Side Validation on all incoming requst bodies.
+- **Strict Validation:** Implement Server-Side Validation on all incoming request bodies using `class-validator` and `Zod`.
 - **Caching:** Introduce Redis to cache the User Role. Currently, we fetch from Firestore on every request. Redis would improve performance at scale.
 - **Testing:** Add E2E tests using Cypress to verify the full login-to-dashboard flow automatically.
+
+<!-- end list -->
+
+```
+
+```
