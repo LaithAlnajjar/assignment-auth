@@ -1,16 +1,14 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
-import { handler } from "next/dist/build/templates/app-page";
 
 export default function Dashboard() {
   const { currentUser, role, loading, logout } = useAuth();
   const router = useRouter();
-  const [profileData, setProfileData] = useState<any>(null);
+  const [profileData, setProfileData] = useState<unknown>(null);
   const [demoLoading, setDemoLoading] = useState(false);
 
   useEffect(() => {
@@ -21,14 +19,12 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (currentUser) {
-      currentUser.getIdToken().then((token) => {
-        api
-          .get("/profile", {
-            headers: { Authorization: `Bearer ${token}` },
-          })
-          .then((res) => setProfileData(res.data))
-          .catch((err) => console.error(err));
-      });
+      api
+        .get("/profile")
+        .then((res) => {
+          setProfileData(res.data);
+        })
+        .catch((err) => console.error(err));
     }
   }, [currentUser]);
 
@@ -36,16 +32,9 @@ export default function Dashboard() {
     if (!currentUser) return;
     setDemoLoading(true);
     try {
-      const token = await currentUser.getIdToken();
       const endpoint = newRole === "admin" ? "/demo/promote" : "/demo/demote";
 
-      await api.post(
-        endpoint,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      await api.post(endpoint);
 
       window.location.reload();
     } catch (err) {

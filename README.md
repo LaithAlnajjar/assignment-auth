@@ -163,7 +163,7 @@ project-root/
 ├── README.md
 ├── backend/                # NestJS
 │   ├── src/
-│   │   ├── auth/           # Auth Guard
+│   │   ├── auth/           # Auth Logic
 │   │   ├── admin/          # Admin Guard
 │   │   ├── firebase/       # Admin SDK & Firestore Providers
 │   │   ├── users/          # User Logic & Demo Endpoints

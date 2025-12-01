@@ -40,13 +40,12 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
       setCurrentUser(currentUser);
-
       if (currentUser) {
         try {
           const res = await api.get("/profile");
-          setRole(res.data.role || "user");
+          setRole(res.data.user.role || "user");
         } catch (err) {
-          console.error("Failed to fetch profile", err);
+          console.log("Failed to fetch profile", err);
           setRole("user");
         }
       } else {
