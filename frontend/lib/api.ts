@@ -14,16 +14,29 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    if (
+      typeof window !== "undefined" &&
+      window.location.pathname === "/login"
+    ) {
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
-        await api.post("/auth/refresh");
+        await axios.post(
+          `${baseURL}/auth/refresh`,
+          {},
+          { withCredentials: true }
+        );
+
         return api(originalRequest);
       } catch (refreshError) {
-        console.error("Refresh failed. User session is invalid.", refreshError);
-
-        if (typeof window !== "undefined") {
+        if (
+          typeof window !== "undefined" &&
+          window.location.pathname !== "/login"
+        ) {
           window.location.href = "/login";
         }
 

@@ -7,7 +7,7 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import auth from "@/lib/firebase";
 
 export default function Login() {
-  const { currentUser, loading, signInWithGoogle } = useAuth();
+  const { currentUser, loading, signInWithGoogle, loginWithEmail } = useAuth();
   const router = useRouter();
 
   const [email, setEmail] = useState("");
@@ -21,9 +21,9 @@ export default function Login() {
     setIsSubmitting(true);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await loginWithEmail(email, password);
       router.push("/dashboard");
-    } catch (err: any) {
+    } catch (err) {
       {
         console.error(err);
         setError("Invalid credentials.");
@@ -135,7 +135,7 @@ export default function Login() {
 
         <div className="mt-6 text-center text-sm">
           <p className="text-gray-600">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link href="/signup" className="text-blue-600 hover:underline">
               Sign up
             </Link>
