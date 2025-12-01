@@ -8,29 +8,39 @@ import {
 } from '@nestjs/common';
 import { type Response, type Request } from 'express';
 import axios from 'axios';
+import { FirebaseRepository } from 'src/firebase/firebase.service';
 
 @Controller('auth')
 export class AuthController {
+  constructor(private readonly firebaseRepo: FirebaseRepository) {}
+
   @Post('login')
-  login(
+  async login(
     @Body() body: { idToken: string; refreshToken: string },
     @Res() res: Response,
   ) {
-    res.cookie('access_token', body.idToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
-      maxAge: 3600 * 1000,
-    });
+    try {
+      await this.firebaseRepo.auth.verifyIdToken(body.idToken);
 
-    res.cookie('refresh_token', body.refreshToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
-      maxAge: 14 * 24 * 3600 * 1000,
-    });
+      res.cookie('access_token', body.idToken, {
+        httpOnly: true,
+        secure: false,
+        sameSite: 'lax',
+        maxAge: 3600 * 1000,
+      });
 
-    return res.send({ status: 'success' });
+      res.cookie('refresh_token', body.refreshToken, {
+        httpOnly: true,
+        secure: false,
+        sameSite: 'lax',
+        maxAge: 14 * 24 * 3600 * 1000,
+      });
+
+      return res.send({ status: 'success' });
+    } catch (error) {
+      console.error('Login Verification Failed:', error);
+      throw new UnauthorizedException('Invalid credentials');
+    }
   }
 
   @Post('refresh')

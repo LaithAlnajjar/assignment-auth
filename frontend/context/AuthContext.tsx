@@ -1,6 +1,7 @@
 "use client";
 import {
   GoogleAuthProvider,
+  signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
   type User,
@@ -21,6 +22,7 @@ interface AuthContextType {
   role: string | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
+  loginWithEmail: (email: string, pass: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -38,14 +40,9 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       setCurrentUser(currentUser);
 
       if (currentUser) {
-        const token = await currentUser.getIdToken();
-
         try {
-          const res = await api.get("/profile", {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          const data = res.data;
-          setRole(data.user?.role || "user");
+          const res = await api.get("/profile");
+          setRole(res.data.role || "user");
         } catch (err) {
           console.error("Failed to fetch profile", err);
           setRole("user");
@@ -63,15 +60,34 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const provider = new GoogleAuthProvider();
       const userCredential = await signInWithPopup(auth, provider);
-      const token = await userCredential.user.getIdToken();
 
-      await api.post(
-        "/users",
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+      const idToken = await userCredential.user.getIdToken();
+      const refreshToken = userCredential.user.refreshToken;
+
+      await api.post("/auth/login", { idToken, refreshToken });
+
+      await api.post("/users");
+
+      router.push("/dashboard");
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  };
+
+  const loginWithEmail = async (email: string, pass: string) => {
+    try {
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        pass
       );
+      const idToken = await userCredential.user.getIdToken();
+      const refreshToken = userCredential.user.refreshToken;
+
+      await api.post("/auth/login", { idToken, refreshToken });
+
+      await api.post("/users");
 
       router.push("/dashboard");
     } catch (error) {
@@ -81,14 +97,26 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    await signOut(auth);
-    setRole(null);
-    router.push("/login");
+    try {
+      await api.post("/auth/logout");
+      await signOut(auth);
+      setRole(null);
+      router.push("/login");
+    } catch (err) {
+      console.error("Logout Failed", err);
+    }
   };
 
   return (
     <AuthContext.Provider
-      value={{ currentUser, role, loading, signInWithGoogle, logout }}
+      value={{
+        currentUser,
+        role,
+        loading,
+        signInWithGoogle,
+        loginWithEmail,
+        logout,
+      }}
     >
       {!loading && children}
     </AuthContext.Provider>
