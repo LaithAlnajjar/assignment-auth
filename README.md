@@ -1,4 +1,3 @@
-````markdown
 # Authentication & RBAC System (Next.js + NestJS + Firebase)
 
 A robust full-stack application implementing secure Authentication, Role-Based Access Control (RBAC), and containerized deployment.
@@ -72,6 +71,7 @@ CLIENT_EMAIL=firebase-adminsdk-xyz@your-project.iam.gserviceaccount.com
 PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQ..."
 FIREBASE_API_KEY=AIzaSy... (Same as frontend key, used for backend refresh calls)
 ```
+
 ````
 
 > **Important:** Place your `service-account.json` file inside the `backend/` folder if running locally without env vars, but the Docker setup reads from this root `.env`.
@@ -201,3 +201,4 @@ If I had more time, I would implement:
 ```
 
 ```
+````
