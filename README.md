@@ -196,10 +196,5 @@ If I had more time, I would implement:
 
 <!-- end list -->
 
-```
-
-```
-
-```
 
 ```
