@@ -9,6 +9,7 @@ import { api } from "@/lib/api";
 export default function AdminStatsPage() {
   const { currentUser, role, loading } = useAuth();
   const router = useRouter();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [stats, setStats] = useState<any>(null);
   const alertShown = useRef(false);
 
